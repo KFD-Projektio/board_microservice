@@ -5,22 +5,20 @@ import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import ru.projektio.boardservice.dto.request.CreateBoardRequest
 import ru.projektio.boardservice.dto.request.UpdateBoardRequest
+import ru.projektio.boardservice.dto.response.BoardDataResponse
 import ru.projektio.boardservice.service.BoardService
 
 @RestController
 @RequestMapping("/api/v1/boards")
 class BoardController(private val boardService: BoardService) {
+
+    @GetMapping("/current")
+    fun getCurrentBoards(@RequestHeader("X-User-Id") userId: Long) : ResponseEntity<List<BoardDataResponse>> {
+        return ResponseEntity.ok(boardService.getBoardsByUserId(userId))
+    }
 
     @GetMapping
     fun getBoards(
