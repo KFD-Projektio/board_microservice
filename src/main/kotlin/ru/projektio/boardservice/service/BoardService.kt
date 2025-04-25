@@ -1,6 +1,7 @@
 package ru.projektio.boardservice.service
 
 import org.springframework.data.domain.Pageable
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.projektio.boardservice.database.entity.BoardEntity
@@ -16,6 +17,10 @@ class BoardService (
     private val boardDao: BoardDao,
     private val boardMapper: BoardMapper
 ) {
+    fun getBoardsByUserId(userId: Long): List<BoardDataResponse> {
+        return boardDao.findAllByUserIDsContains(userId).map { boardMapper.boardData(it) }
+    }
+
     // плохо, что any, но хочу в один метод
     fun getBoards(searchTerm: String?, pageable: Pageable?): Any {
         return when {
