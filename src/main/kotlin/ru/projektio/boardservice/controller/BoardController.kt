@@ -24,7 +24,7 @@ class BoardController(private val boardService: BoardService) {
     fun getBoards(
         @RequestParam(required = false) search: String?,
         @PageableDefault(size = 10, sort = ["id"], direction = Sort.Direction.ASC) pageable: Pageable
-    ): ResponseEntity<Any> {
+    ): ResponseEntity<Iterable<BoardDataResponse>> {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(boardService.getBoards(search, pageable))

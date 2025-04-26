@@ -22,7 +22,7 @@ class BoardService (
     }
 
     // плохо, что any, но хочу в один метод
-    fun getBoards(searchTerm: String?, pageable: Pageable?): Any {
+    fun getBoards(searchTerm: String?, pageable: Pageable?): Iterable<BoardDataResponse> {
         return when {
             pageable != null -> {
                 if (searchTerm != null) {
