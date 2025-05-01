@@ -12,7 +12,7 @@ import ru.projektio.boardservice.dto.response.BoardDataResponse
 import ru.projektio.boardservice.service.BoardService
 
 @RestController
-@RequestMapping("/api/v1/boards")
+@RequestMapping("/boards")
 class BoardController(private val boardService: BoardService) {
 
     @GetMapping("/current")
@@ -22,31 +22,41 @@ class BoardController(private val boardService: BoardService) {
 
     @GetMapping
     fun getBoards(
+        @RequestHeader("X-User-Id") userId: Long,
         @RequestParam(required = false) search: String?,
         @PageableDefault(size = 10, sort = ["id"], direction = Sort.Direction.ASC) pageable: Pageable
     ): ResponseEntity<Iterable<BoardDataResponse>> {
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(boardService.getBoards(search, pageable))
+            .body(boardService.getBoards(userId, search, pageable))
     }
 
     @PostMapping
-    fun createBoard(@RequestBody data: CreateBoardRequest) = ResponseEntity
+    fun createBoard(@RequestHeader("X-User-Id") userId: Long,
+                    @RequestBody data: CreateBoardRequest
+    ) = ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(boardService.addBoard(data))
+            .body(boardService.addBoard(userId, data))
 
     @GetMapping("/{boardId}")
-    fun getBoardById(@PathVariable("boardId") boardId: Long) = ResponseEntity
+    fun getBoardById(@RequestHeader("X-User-Id") userId: Long,
+                     @PathVariable("boardId") boardId: Long
+    ) = ResponseEntity
         .status(HttpStatus.OK)
-        .body(boardService.getBoardById(boardId))
+        .body(boardService.getBoardById(userId, boardId))
 
     @PutMapping("/{boardId}")
-    fun updateBoard(@PathVariable("boardId") boardId: Long, @RequestBody data: UpdateBoardRequest) = ResponseEntity
+    fun updateBoard(@RequestHeader("X-User-Id") userId: Long,
+                    @PathVariable("boardId") boardId: Long,
+                    @RequestBody data: UpdateBoardRequest
+    ) = ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(boardService.updateBoardData(boardId, data))
+        .body(boardService.updateBoardData(userId, boardId, data))
 
     @DeleteMapping("/{boardId}")
-    fun deleteBoard(@PathVariable("boardId") boardId: Long) = ResponseEntity
+    fun deleteBoard(@RequestHeader("X-User-Id") userId: Long,
+                    @PathVariable("boardId") boardId: Long
+    ) = ResponseEntity
         .status(HttpStatus.NO_CONTENT)
-        .body(boardService.deleteBoard(boardId))
+        .body(boardService.deleteBoard(userId, boardId))
 }
