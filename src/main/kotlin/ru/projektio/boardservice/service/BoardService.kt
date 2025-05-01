@@ -51,7 +51,10 @@ class BoardService (
     fun getBoardById(userId: Long, boardId: Long): BoardDataResponse {
         if (boardExists(boardId)) {
             val board = boardDao.findBoardEntityById(boardId).map {boardMapper.boardData(it)}[0]
-            if (userId in board.userIds) {
+            // userId from header is never equal to -1, so it was sent from board mapper which
+            // is only achieved when everything is OK
+            // so we should return board anyway
+            if (userId in board.userIds || userId == -1L) {
                 return board
             }
             else throw RestrictedUserException("You can't check this board.")
