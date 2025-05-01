@@ -23,4 +23,9 @@ class ExceptionHandler {
     fun handleNoContentException(e: NoContentException) = ResponseEntity
         .status(HttpStatus.NOT_FOUND)
         .body(ExceptionResponse(e.cause, e.message))
+
+    @ExceptionHandler(RestrictedUserException::class)
+    fun handleRestrictedUserException(e: RestrictedUserException) = ResponseEntity
+        .status(HttpStatus.FORBIDDEN)
+        .body(ExceptionResponse(e.cause, e.message))
 }

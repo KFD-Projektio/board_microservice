@@ -8,10 +8,6 @@ import org.springframework.data.repository.query.Param
 import ru.projektio.boardservice.database.entity.BoardEntity
 
 interface BoardDao: CrudRepository<BoardEntity, Long> {
-    fun findBoardEntityByBoardNameContainingIgnoreCase(boardName: String, pageable: Pageable): MutableList<BoardEntity>
-    fun findBoardEntityByBoardNameContainingIgnoreCase(boardName: String): MutableList<BoardEntity>
-    fun findAll(pageable: Pageable): Page<BoardEntity>
-    fun getBoardEntityById(id: Long): MutableList<BoardEntity>
     fun findBoardEntityById(id: Long): MutableList<BoardEntity>
 
     @Query("""
@@ -20,4 +16,16 @@ interface BoardDao: CrudRepository<BoardEntity, Long> {
         WHERE uid = :userId
     """)
     fun findAllByUserIDsContains(@Param("userId") userId: Long): List<BoardEntity>
+
+    fun findBoardEntityByBoardNameContainingIgnoreCaseAndUserIDsContaining(
+        boardName: String,
+        userIDs: MutableList<Long>,
+        pageable: Pageable
+    ): Page<BoardEntity>
+
+    fun findAllByUserIDsContains(userIDs: MutableList<Long>, pageable: Pageable): Page<BoardEntity>
+    fun findBoardEntityByBoardNameContainingIgnoreCaseAndUserIDsContaining(
+        boardName: String,
+        userIDs: MutableList<Long>
+    ): MutableList<BoardEntity>
 }

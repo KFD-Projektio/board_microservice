@@ -2,53 +2,57 @@ package ru.projektio.boardservice.controller
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import ru.projektio.boardservice.dto.request.CreateColumnRequest
 import ru.projektio.boardservice.dto.request.NewColumnPositionsRequest
 import ru.projektio.boardservice.dto.request.NewColumnTitleRequest
 import ru.projektio.boardservice.service.ColumnService
 
 @RestController
-@RequestMapping("/api/v1/boards/{boardId}/columns")
+@RequestMapping("/boards/{boardId}/columns")
 class ColumnController (
     private val columnService: ColumnService
 ) {
 
     @GetMapping
-    fun getAllBoardColumns(@PathVariable("boardId") boardId: Long) = ResponseEntity
+    fun getAllBoardColumns(@RequestHeader("X-User-Id") userId: Long,
+                           @PathVariable("boardId") boardId: Long
+    ) = ResponseEntity
         .status(HttpStatus.OK)
-        .body(columnService.getBoardColumns(boardId))
+        .body(columnService.getBoardColumns(userId, boardId))
 
     @PostMapping
-    fun addColumn(@PathVariable("boardId") boardId: Long, data: CreateColumnRequest) = ResponseEntity
+    fun addColumn(@RequestHeader("X-User-Id") userId: Long,
+                  @PathVariable("boardId") boardId: Long,
+                  data: CreateColumnRequest
+    ) = ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(columnService.addColumn(boardId, data))
+        .body(columnService.addColumn(userId, boardId, data))
 
     @PutMapping("/{columnPosition}")
     fun renameColumn(
+        @RequestHeader("X-User-Id") userId: Long,
         @PathVariable("boardId") boardId: Long,
         @PathVariable("columnPosition") columnPosition: Int,
         data: NewColumnTitleRequest
     ) = ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(columnService.changeColumnTitle(boardId, columnPosition, data))
+        .body(columnService.changeColumnTitle(userId, boardId, columnPosition, data))
 
     @PutMapping("/reorder")
-    fun reorderColumns(@PathVariable("boardId") boardId: Long, newOrder: NewColumnPositionsRequest) = ResponseEntity
+    fun reorderColumns(@RequestHeader("X-User-Id") userId: Long,
+                       @PathVariable("boardId") boardId: Long,
+                       newOrder: NewColumnPositionsRequest
+    ) = ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(columnService.reorderColumns(boardId, newOrder.positions))
+        .body(columnService.reorderColumns(userId, boardId, newOrder.positions))
 
     @DeleteMapping("/{columnPosition}")
     fun deleteColumn(
+        @RequestHeader("X-User-Id") userId: Long,
         @PathVariable("boardId") boardId: Long,
         @PathVariable("columnPosition") columnPosition: Int
     ) = ResponseEntity
         .status(HttpStatus.NO_CONTENT)
-        .body(columnService.deleteColumn(boardId, columnPosition))
+        .body(columnService.deleteColumn(userId, boardId, columnPosition))
 }

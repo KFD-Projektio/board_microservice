@@ -12,7 +12,7 @@ class BoardMapper (
     fun boardData(board: BoardEntity) = BoardDataResponse(
         boardName = board.boardName,
         boardDescription = board.boardDescription,
-        columnsIds = columnService.getBoardColumns(board.id).map{it.id},
+        columnsIds = columnService.getBoardColumns(-1, board.id).map{it.id},
         userIds = board.userIDs
     )
 }

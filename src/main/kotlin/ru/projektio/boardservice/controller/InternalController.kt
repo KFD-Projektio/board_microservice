@@ -2,15 +2,12 @@ package ru.projektio.boardservice.controller
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import ru.projektio.boardservice.service.BoardService
 import ru.projektio.boardservice.service.ColumnService
 
 @RestController
-@RequestMapping("/internal/api/v1/boards/{boardId}")
+@RequestMapping("/internal/boards/{boardId}")
 class InternalController(
     private val boardService: BoardService,
     private val columnService: ColumnService
@@ -21,7 +18,9 @@ class InternalController(
         .body(boardService.boardExists(boardId))
 
     @GetMapping("/columns")
-    fun getBoardColumns(@PathVariable("boardId") boardId: Long) = ResponseEntity
+    fun getBoardColumns(@RequestHeader("X-User-Id") userId: Long,
+                        @PathVariable("boardId") boardId: Long
+    ) = ResponseEntity
         .status(HttpStatus.OK)
-        .body(columnService.getBoardColumns(boardId))
+        .body(columnService.getBoardColumns(userId, boardId))
 }
