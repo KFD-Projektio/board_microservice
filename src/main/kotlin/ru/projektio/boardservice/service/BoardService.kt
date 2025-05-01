@@ -21,7 +21,6 @@ class BoardService (
         return boardDao.findAllByUserIDsContains(userId).map { boardMapper.boardData(it) }
     }
 
-    // плохо, что any, но хочу в один метод
     fun getBoards(userId: Long, searchTerm: String?, pageable: Pageable?): Iterable<BoardDataResponse> {
         return when {
             pageable != null -> {
@@ -51,15 +50,16 @@ class BoardService (
     fun getBoardById(userId: Long, boardId: Long): BoardDataResponse {
         if (boardExists(boardId)) {
             val board = boardDao.findBoardEntityById(boardId).map {boardMapper.boardData(it)}[0]
-            // userId from header is never equal to -1, so it was sent from board mapper which
-            // is only achieved when everything is OK
-            // so we should return board anyway
-            if (userId in board.userIds || userId == -1L) {
+            if (userId in board.userIds) {
                 return board
             }
             else throw RestrictedUserException("You can't check this board.")
         }
         else throw NoContentException("There is no such board")
+    }
+    fun getBoardByIdInternal(boardId: Long): BoardDataResponse {
+        val board = boardDao.findBoardEntityById(boardId).map {boardMapper.boardData(it)}[0]
+        return board
     }
 
     @Transactional
