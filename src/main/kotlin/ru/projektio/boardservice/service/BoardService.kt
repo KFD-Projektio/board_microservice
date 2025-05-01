@@ -1,7 +1,6 @@
 package ru.projektio.boardservice.service
 
 import org.springframework.data.domain.Pageable
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.projektio.boardservice.database.entity.BoardEntity
@@ -11,6 +10,7 @@ import ru.projektio.boardservice.dto.request.CreateBoardRequest
 import ru.projektio.boardservice.dto.request.UpdateBoardRequest
 import ru.projektio.boardservice.dto.response.BoardDataResponse
 import ru.projektio.boardservice.exception.NoContentException
+import ru.projektio.boardservice.exception.RestrictedUserException
 
 @Service
 class BoardService (
@@ -22,45 +22,49 @@ class BoardService (
     }
 
     // плохо, что any, но хочу в один метод
-    fun getBoards(searchTerm: String?, pageable: Pageable?): Iterable<BoardDataResponse> {
+    fun getBoards(userId: Long, searchTerm: String?, pageable: Pageable?): Iterable<BoardDataResponse> {
         return when {
             pageable != null -> {
                 if (searchTerm != null) {
-                    boardDao.findBoardEntityByBoardNameContainingIgnoreCase(searchTerm, pageable)
+                    boardDao.findBoardEntityByBoardNameContainingIgnoreCaseAndUserIDsContaining(searchTerm, mutableListOf(userId) ,pageable)
                         .map {boardMapper.boardData(it)}
                 }
                 else {
-                    boardDao.findAll(pageable)
+                    boardDao.findAllByUserIDsContains(mutableListOf(userId), pageable)
                         .map { boardMapper.boardData(it) }
                 }
             }
             searchTerm != null -> {
-                boardDao.findBoardEntityByBoardNameContainingIgnoreCase(searchTerm)
+                boardDao.findBoardEntityByBoardNameContainingIgnoreCaseAndUserIDsContaining(searchTerm, mutableListOf(userId))
                     .map { boardMapper.boardData(it) }
             }
             else -> {
-                boardDao.findAll()
+                boardDao.findAllByUserIDsContains(userId)
                     .map { boardMapper.boardData(it) }
             }
         }
     }
     fun boardExists(boardId: Long): Boolean {
-        try {val board = boardDao.findBoardEntityById(boardId)[0]; return true}
+        try {boardDao.findBoardEntityById(boardId)[0]; return true}
         catch (e: IndexOutOfBoundsException) {return false}
     }
-    fun getBoardById(boardId: Long): BoardDataResponse {
+    fun getBoardById(userId: Long, boardId: Long): BoardDataResponse {
         if (boardExists(boardId)) {
-            return boardDao.findBoardEntityById(boardId).map {boardMapper.boardData(it)}[0]
+            val board = boardDao.findBoardEntityById(boardId).map {boardMapper.boardData(it)}[0]
+            if (userId in board.userIds) {
+                return board
+            }
+            else throw RestrictedUserException("You can't check this board.")
         }
         else throw NoContentException("There is no such board")
     }
 
     @Transactional
-    fun addBoard(data: CreateBoardRequest): BoardDataResponse {
+    fun addBoard(userId: Long, data: CreateBoardRequest): BoardDataResponse {
         val board = BoardEntity(
             boardName = data.title,
             boardDescription = data.description,
-            ownerId = data.ownerId
+            ownerId = userId
         )
         if (data.isPrivate != null) { board.isPrivate = data.isPrivate }
         board.userIDs.add(board.ownerId)
@@ -69,19 +73,23 @@ class BoardService (
     }
 
     @Transactional
-    fun updateBoardData(boardId: Long, data: UpdateBoardRequest): BoardDataResponse {
+    fun updateBoardData(userId: Long, boardId: Long, data: UpdateBoardRequest): BoardDataResponse {
         if (boardExists(boardId)) {
             val board = boardDao.findBoardEntityById(boardId)[0]
-            board.boardName = data.title
-            board.boardDescription = data.description
-            board.userIDs = data.userIds.toMutableList()
-            boardDao.save(board)
-            return boardMapper.boardData(board)
+            if (userId in board.userIDs) {
+                board.boardName = data.title
+                board.boardDescription = data.description
+                board.userIDs = data.userIds.toMutableList()
+                boardDao.save(board)
+                return boardMapper.boardData(board)
+            }
+            else throw RestrictedUserException("You can't edit this board.")
         }
         else throw NoContentException("There is no such board")
     }
 
-    fun deleteBoard(boardId: Long) {
-        boardDao.deleteById(boardId)
+    fun deleteBoard(userId: Long, boardId: Long) {
+        try {getBoardById(userId, boardId); boardDao.deleteById(boardId)}
+        catch (e: RestrictedUserException) { throw RestrictedUserException("You can't delete this board") }
     }
 }
