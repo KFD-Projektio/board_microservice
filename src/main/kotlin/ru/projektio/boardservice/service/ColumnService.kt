@@ -27,6 +27,9 @@ class ColumnService(
             throw RestrictedUserException("Can't check columns on board that you can't see")
         }
     }
+    fun getBoardColumnsInternal(boardId: Long): List<ColumnEntity> {
+        return columnDao.getColumnEntityByBoardId(boardId).toList()
+    }
 
     @Transactional
     fun addColumn(userId: Long, boardId: Long, data: CreateColumnRequest): ColumnDataResponse {
