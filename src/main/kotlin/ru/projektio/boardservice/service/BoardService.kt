@@ -55,7 +55,7 @@ class BoardService (
             if (userId in board.userIds) {
                 return board
             }
-            else throw RestrictedUserException("You can't check this board.")
+            else throw RestrictedUserException("You can't perform actions this board.")
         }
         else throw NoContentException("There is no such board")
     }
@@ -77,6 +77,7 @@ class BoardService (
             boardId = savedBoard.id,
             userId = userId
         ))
+        boardDao.save(savedBoard)
 
         return boardMapper.boardData(savedBoard)
     }

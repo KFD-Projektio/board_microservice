@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*
 import ru.projektio.boardservice.dto.request.CreateColumnRequest
 import ru.projektio.boardservice.dto.request.NewColumnPositionsRequest
 import ru.projektio.boardservice.dto.request.NewColumnTitleRequest
+import ru.projektio.boardservice.dto.request.SwapColumnsRequest
 import ru.projektio.boardservice.service.ColumnService
 
 @RestController
@@ -24,7 +25,7 @@ class ColumnController (
     @PostMapping
     fun addColumn(@RequestHeader("X-User-Id") userId: Long,
                   @PathVariable("boardId") boardId: Long,
-                  data: CreateColumnRequest
+                  @RequestBody data: CreateColumnRequest
     ) = ResponseEntity
         .status(HttpStatus.CREATED)
         .body(columnService.addColumn(userId, boardId, data))
@@ -34,7 +35,7 @@ class ColumnController (
         @RequestHeader("X-User-Id") userId: Long,
         @PathVariable("boardId") boardId: Long,
         @PathVariable("columnPosition") columnPosition: Int,
-        data: NewColumnTitleRequest
+        @RequestBody data: NewColumnTitleRequest
     ) = ResponseEntity
         .status(HttpStatus.CREATED)
         .body(columnService.changeColumnTitle(userId, boardId, columnPosition, data))
@@ -42,10 +43,18 @@ class ColumnController (
     @PutMapping("/reorder")
     fun reorderColumns(@RequestHeader("X-User-Id") userId: Long,
                        @PathVariable("boardId") boardId: Long,
-                       newOrder: NewColumnPositionsRequest
+                       @RequestBody newOrder: NewColumnPositionsRequest
     ) = ResponseEntity
         .status(HttpStatus.CREATED)
         .body(columnService.reorderColumns(userId, boardId, newOrder.positions))
+
+    @PutMapping("/swap")
+    fun swapColumns(@RequestHeader("X-User-Id") userId: Long,
+                    @PathVariable("boardId") boardId: Long,
+                    @RequestBody swapColumns: SwapColumnsRequest
+    ) = ResponseEntity
+        .status(HttpStatus.CREATED)
+        .body(columnService.swapColumns(userId, boardId, swapColumns.position1, swapColumns.position2))
 
     @DeleteMapping("/{columnPosition}")
     fun deleteColumn(
