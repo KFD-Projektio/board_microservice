@@ -10,22 +10,39 @@ import ru.projektio.boardservice.database.entity.BoardEntity
 interface BoardDao: CrudRepository<BoardEntity, Long> {
     fun findBoardEntityById(id: Long): MutableList<BoardEntity>
 
-    @Query("""
-        SELECT b from BoardEntity b
-        JOIN b.userIDs uid
-        WHERE uid = :userId
-    """)
-    fun findAllByUserIDsContains(@Param("userId") userId: Long): List<BoardEntity>
+    @Query("SELECT b FROM BoardEntity b JOIN b.boardUsers u WHERE u.userId = :userId")
+    fun findAllByUserId(@Param("userId") userId: Long): List<BoardEntity>
 
-    fun findBoardEntityByBoardNameContainingIgnoreCaseAndUserIDsContaining(
-        boardName: String,
-        userIDs: MutableList<Long>,
+    @Query("""
+        SELECT DISTINCT b FROM BoardEntity b
+        LEFT JOIN b.boardUsers u
+        WHERE (u.userId = :userId OR b.ownerId = :userId)
+        AND (:search IS NULL OR LOWER(b.boardName) LIKE LOWER(CONCAT('%', :search, '%')))
+    """)
+    fun findByUserWithPaginationAndTitle(
+        @Param("userId") userId: Long,
+        @Param("search") title: String?,
         pageable: Pageable
     ): Page<BoardEntity>
 
-    fun findAllByUserIDsContains(userIDs: MutableList<Long>, pageable: Pageable): Page<BoardEntity>
-    fun findBoardEntityByBoardNameContainingIgnoreCaseAndUserIDsContaining(
-        boardName: String,
-        userIDs: MutableList<Long>
-    ): MutableList<BoardEntity>
+    @Query("""
+        SELECT DISTINCT b FROM BoardEntity b
+        LEFT JOIN b.boardUsers u
+        WHERE u.userId = :userId OR b.ownerId = :userId
+    """)
+    fun findByUserWithPagination(
+        @Param("userId") userId: Long,
+        pageable: Pageable
+    ): Page<BoardEntity>
+
+    @Query("""
+    SELECT DISTINCT b FROM BoardEntity b
+    LEFT JOIN b.boardUsers u
+    WHERE (u.userId = :userId OR b.ownerId = :userId)
+    AND LOWER(b.boardName) LIKE LOWER(CONCAT('%', :search, '%'))
+    """)
+    fun findByUserAndTitle(
+        @Param("userId") userId: Long,
+        @Param("search") title: String
+    ): List<BoardEntity>
 }
