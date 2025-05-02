@@ -33,8 +33,11 @@ class BoardEntity (
     @CreationTimestamp
     var updatedAt: LocalDateTime = LocalDateTime.now()
 
-    @ElementCollection
-    @CollectionTable(name = "user_boards", joinColumns = [JoinColumn(name = "board_id")])
-    @Column(name = "user_id")
-    var userIDs: MutableList<Long> = mutableListOf()
+    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JoinColumn(name = "board_id")
+    var boardUsers: MutableList<BoardUserEntity> = mutableListOf()
+
+    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JoinColumn(name = "board_id")
+    var boardColumns: MutableList<BoardColumnEntity> = mutableListOf()
 }

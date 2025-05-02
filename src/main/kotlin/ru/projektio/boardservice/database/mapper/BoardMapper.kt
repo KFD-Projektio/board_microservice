@@ -6,13 +6,11 @@ import ru.projektio.boardservice.dto.response.BoardDataResponse
 import ru.projektio.boardservice.service.ColumnService
 
 @Component
-class BoardMapper (
-    private val columnService: ColumnService
-) {
+class BoardMapper {
     fun boardData(board: BoardEntity) = BoardDataResponse(
         boardName = board.boardName,
         boardDescription = board.boardDescription,
-        columnsIds = columnService.getBoardColumnsInternal(board.id).map{it.id},
-        userIds = board.userIDs
+        columnsIds = board.boardColumns.map { it.columnId },
+        userIds = board.boardUsers.map { it.userId }
     )
 }

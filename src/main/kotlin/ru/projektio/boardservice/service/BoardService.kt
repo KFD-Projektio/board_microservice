@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.projektio.boardservice.database.entity.BoardEntity
+import ru.projektio.boardservice.database.entity.BoardUserEntity
 import ru.projektio.boardservice.database.mapper.BoardMapper
 import ru.projektio.boardservice.database.repository.BoardDao
 import ru.projektio.boardservice.dto.request.CreateBoardRequest
@@ -57,10 +58,6 @@ class BoardService (
         }
         else throw NoContentException("There is no such board")
     }
-    fun getBoardByIdInternal(boardId: Long): BoardDataResponse {
-        val board = boardDao.findBoardEntityById(boardId).map {boardMapper.boardData(it)}[0]
-        return board
-    }
 
     @Transactional
     fun addBoard(userId: Long, data: CreateBoardRequest): BoardDataResponse {
@@ -70,7 +67,7 @@ class BoardService (
             ownerId = userId
         )
         if (data.isPrivate != null) { board.isPrivate = data.isPrivate }
-        board.userIDs.add(board.ownerId)
+        board.boardUsers.add(BoardUserEntity(boardId = board.id, userId = userId))
         boardDao.save(board)
         return boardMapper.boardData(board)
     }
@@ -79,10 +76,12 @@ class BoardService (
     fun updateBoardData(userId: Long, boardId: Long, data: UpdateBoardRequest): BoardDataResponse {
         if (boardExists(boardId)) {
             val board = boardDao.findBoardEntityById(boardId)[0]
-            if (userId in board.userIDs) {
+            if (userId in board.boardUsers.map { it.id }) {
                 board.boardName = data.title
                 board.boardDescription = data.description
-                board.userIDs = data.userIds.toMutableList()
+                board.boardUsers = data.userIds
+                    .map { BoardUserEntity(boardId = boardId, userId = it) }
+                    .toMutableList()
                 boardDao.save(board)
                 return boardMapper.boardData(board)
             }

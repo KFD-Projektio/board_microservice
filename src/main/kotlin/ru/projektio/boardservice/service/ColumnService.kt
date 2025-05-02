@@ -19,16 +19,17 @@ class ColumnService(
     private val boardService: BoardService,
 ) {
 
-    fun getBoardColumns(userId: Long, boardId: Long): List<ColumnEntity> {
+    fun getBoardColumns(userId: Long, boardId: Long): List<ColumnDataResponse> {
         try { boardService.getBoardById(userId, boardId)
-            return columnDao.getColumnEntityByBoardId(boardId).toList()
+            return columnDao.getColumnEntityByBoardId(boardId).toList().map {columnMapper.columnData(it)}
         }
         catch (e: RestrictedUserException) {
             throw RestrictedUserException("Can't check columns on board that you can't see")
         }
     }
-    fun getBoardColumnsInternal(boardId: Long): List<ColumnEntity> {
-        return columnDao.getColumnEntityByBoardId(boardId).toList()
+
+    fun getColumnByIdInternal(columnId: Long): ColumnEntity {
+        return columnDao.getColumnEntityById(columnId)[0]
     }
 
     @Transactional
@@ -48,11 +49,12 @@ class ColumnService(
     }
 
     fun changeColumnTitle(userId: Long, boardId: Long, columnPosition: Int, data: NewColumnTitleRequest): ColumnDataResponse {
-        try {val boardColumns = getBoardColumns(userId, boardId)
+        try {val boardColumns = boardService.getBoardById(userId, boardId).columnsIds
             if (columnPosition > boardColumns.size || columnPosition < 0) {
                 throw NoColumnException("The postiton is wrong and/or the board doesn't have that many columns")
             }
-            val column = boardColumns[columnPosition]
+            val columnId = boardColumns[columnPosition]
+            val column = getColumnByIdInternal(columnId)
             column.columnTitle = data.title
             columnDao.save(column)
             return columnMapper.columnData(column)
