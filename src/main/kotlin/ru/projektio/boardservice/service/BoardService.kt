@@ -46,9 +46,9 @@ class BoardService (
     }
 
     fun boardExists(boardId: Long): Boolean {
-        try {boardDao.findBoardEntityById(boardId)[0]; return true}
-        catch (e: IndexOutOfBoundsException) {return false}
+        return boardDao.existsById(boardId)
     }
+
     fun getBoardById(userId: Long, boardId: Long): BoardDataResponse {
         if (boardExists(boardId)) {
             val board = boardDao.findBoardEntityById(boardId).map {boardMapper.boardData(it)}[0]
@@ -66,33 +66,51 @@ class BoardService (
             boardName = data.title,
             boardDescription = data.description,
             ownerId = userId
-        )
-        if (data.isPrivate != null) { board.isPrivate = data.isPrivate }
-        board.boardUsers.add(BoardUserEntity(boardId = board.id, userId = userId))
-        boardDao.save(board)
-        return boardMapper.boardData(board)
+        ).apply {
+            if (data.isPrivate != null) {
+                this.isPrivate = data.isPrivate
+            }
+        }
+        val savedBoard = boardDao.save(board)
+
+        savedBoard.boardUsers.add(BoardUserEntity(
+            boardId = savedBoard.id,
+            userId = userId
+        ))
+        boardDao.save(savedBoard)
+
+        return boardMapper.boardData(savedBoard)
     }
 
     @Transactional
     fun updateBoardData(userId: Long, boardId: Long, data: UpdateBoardRequest): BoardDataResponse {
-        if (boardExists(boardId)) {
-            val board = boardDao.findBoardEntityById(boardId)[0]
-            if (userId in board.boardUsers.map { it.id }) {
-                board.boardName = data.title
-                board.boardDescription = data.description
-                board.boardUsers = data.userIds
-                    .map { BoardUserEntity(boardId = boardId, userId = it) }
-                    .toMutableList()
-                boardDao.save(board)
-                return boardMapper.boardData(board)
-            }
-            else throw RestrictedUserException("You can't edit this board.")
+        val board = boardDao.findById(boardId) 
+            .orElseThrow { NoContentException("There is no such board") }
+        
+        if (userId != board.ownerId && userId !in board.boardUsers.map { it.userId }) {
+            throw RestrictedUserException("You can't edit this board.")
         }
-        else throw NoContentException("There is no such board")
+        
+        board.apply {
+            boardName = data.title
+            boardDescription = data.description ?: boardDescription
+        }
+        board.boardUsers = data.userIds
+            .map { BoardUserEntity(boardId = boardId, userId = it) }
+            .toMutableList()
+        boardDao.save(board)
+        return boardMapper.boardData(board)
+        
     }
 
     fun deleteBoard(userId: Long, boardId: Long) {
-        try {getBoardById(userId, boardId); boardDao.deleteById(boardId)}
-        catch (e: RestrictedUserException) { throw RestrictedUserException("You can't delete this board") }
+        if (!boardDao.existsById(boardId)) {
+            throw NoContentException("There is no such board")
+        }
+        val board = boardDao.findById(boardId).get()
+        if (userId !in board.boardUsers.map { it.userId }) {
+            throw RestrictedUserException("You can't delete this board")
+        }
+        boardDao.delete(board)
     }
 }
