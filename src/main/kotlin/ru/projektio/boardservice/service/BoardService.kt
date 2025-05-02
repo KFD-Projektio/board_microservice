@@ -55,7 +55,7 @@ class BoardService (
             if (userId in board.userIds) {
                 return board
             }
-            else throw RestrictedUserException("You can't perform actions this board.")
+            else throw RestrictedUserException("You can't check this board.")
         }
         else throw NoContentException("There is no such board")
     }
@@ -84,13 +84,13 @@ class BoardService (
 
     @Transactional
     fun updateBoardData(userId: Long, boardId: Long, data: UpdateBoardRequest): BoardDataResponse {
-        val board = boardDao.findById(boardId)
+        val board = boardDao.findById(boardId) 
             .orElseThrow { NoContentException("There is no such board") }
-
+        
         if (userId != board.ownerId && userId !in board.boardUsers.map { it.userId }) {
             throw RestrictedUserException("You can't edit this board.")
         }
-
+        
         board.apply {
             boardName = data.title
             boardDescription = data.description ?: boardDescription
@@ -100,6 +100,7 @@ class BoardService (
             .toMutableList()
         boardDao.save(board)
         return boardMapper.boardData(board)
+        
     }
 
     fun deleteBoard(userId: Long, boardId: Long) {
