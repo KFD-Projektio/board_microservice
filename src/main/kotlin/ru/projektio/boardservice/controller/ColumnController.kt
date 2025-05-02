@@ -24,7 +24,7 @@ class ColumnController (
     @PostMapping
     fun addColumn(@RequestHeader("X-User-Id") userId: Long,
                   @PathVariable("boardId") boardId: Long,
-                  data: CreateColumnRequest
+                  @RequestBody data: CreateColumnRequest
     ) = ResponseEntity
         .status(HttpStatus.CREATED)
         .body(columnService.addColumn(userId, boardId, data))
@@ -34,7 +34,7 @@ class ColumnController (
         @RequestHeader("X-User-Id") userId: Long,
         @PathVariable("boardId") boardId: Long,
         @PathVariable("columnPosition") columnPosition: Int,
-        data: NewColumnTitleRequest
+        @RequestBody data: NewColumnTitleRequest
     ) = ResponseEntity
         .status(HttpStatus.CREATED)
         .body(columnService.changeColumnTitle(userId, boardId, columnPosition, data))
@@ -42,7 +42,7 @@ class ColumnController (
     @PutMapping("/reorder")
     fun reorderColumns(@RequestHeader("X-User-Id") userId: Long,
                        @PathVariable("boardId") boardId: Long,
-                       newOrder: NewColumnPositionsRequest
+                       @RequestBody newOrder: NewColumnPositionsRequest
     ) = ResponseEntity
         .status(HttpStatus.CREATED)
         .body(columnService.reorderColumns(userId, boardId, newOrder.positions))
