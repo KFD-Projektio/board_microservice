@@ -19,31 +19,32 @@ class BoardService (
     private val boardMapper: BoardMapper
 ) {
     fun getBoardsByUserId(userId: Long): List<BoardDataResponse> {
-        return boardDao.findAllByUserIDsContains(userId).map { boardMapper.boardData(it) }
+        return boardDao.findAllByUserId(userId).map { boardMapper.boardData(it) }
     }
 
     fun getBoards(userId: Long, searchTerm: String?, pageable: Pageable?): Iterable<BoardDataResponse> {
         return when {
             pageable != null -> {
                 if (searchTerm != null) {
-                    boardDao.findBoardEntityByBoardNameContainingIgnoreCaseAndUserIDsContaining(searchTerm, mutableListOf(userId) ,pageable)
+                    boardDao.findByUserWithPaginationAndTitle(userId, searchTerm ,pageable)
                         .map {boardMapper.boardData(it)}
                 }
                 else {
-                    boardDao.findAllByUserIDsContains(mutableListOf(userId), pageable)
+                    boardDao.findByUserWithPagination(userId, pageable)
                         .map { boardMapper.boardData(it) }
                 }
             }
             searchTerm != null -> {
-                boardDao.findBoardEntityByBoardNameContainingIgnoreCaseAndUserIDsContaining(searchTerm, mutableListOf(userId))
+                boardDao.findByUserAndTitle(userId, searchTerm)
                     .map { boardMapper.boardData(it) }
             }
             else -> {
-                boardDao.findAllByUserIDsContains(userId)
+                boardDao.findAllByUserId(userId)
                     .map { boardMapper.boardData(it) }
             }
         }
     }
+
     fun boardExists(boardId: Long): Boolean {
         try {boardDao.findBoardEntityById(boardId)[0]; return true}
         catch (e: IndexOutOfBoundsException) {return false}
