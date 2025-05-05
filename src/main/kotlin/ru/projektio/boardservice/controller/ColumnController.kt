@@ -62,6 +62,6 @@ class ColumnController (
         @PathVariable("boardId") boardId: Long,
         @PathVariable("columnPosition") columnPosition: Int
     ) = ResponseEntity
-        .status(HttpStatus.NO_CONTENT)
+        .status(204)
         .body(columnService.deleteColumn(userId, boardId, columnPosition))
 }
