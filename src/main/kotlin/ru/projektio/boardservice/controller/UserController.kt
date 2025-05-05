@@ -7,7 +7,7 @@ import ru.projektio.boardservice.dto.request.UserIdRequest
 import ru.projektio.boardservice.service.UserService
 
 @RestController
-@RequestMapping("/boards/{boardId}/users}")
+@RequestMapping("/boards/{boardId}/users")
 class UserController (
     private val userService: UserService
 ) {

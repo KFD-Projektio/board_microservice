@@ -15,4 +15,5 @@ class BoardColumnEntity (
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0
+
 }

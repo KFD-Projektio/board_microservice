@@ -45,4 +45,6 @@ interface BoardDao: CrudRepository<BoardEntity, Long> {
         @Param("userId") userId: Long,
         @Param("search") title: String
     ): List<BoardEntity>
+
+    fun findFirstById(id: Long): MutableList<BoardEntity>
 }

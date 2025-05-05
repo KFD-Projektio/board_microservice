@@ -2,13 +2,16 @@ package ru.projektio.boardservice.service
 
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.stereotype.Service
+import ru.projektio.boardservice.database.entity.BoardColumnEntity
 import ru.projektio.boardservice.database.entity.ColumnEntity
 import ru.projektio.boardservice.database.mapper.ColumnMapper
+import ru.projektio.boardservice.database.repository.BoardDao
 import ru.projektio.boardservice.database.repository.ColumnDao
 import ru.projektio.boardservice.dto.request.CreateColumnRequest
 import ru.projektio.boardservice.dto.request.NewColumnTitleRequest
 import ru.projektio.boardservice.dto.response.ColumnDataResponse
 import ru.projektio.boardservice.exception.NoColumnException
+import ru.projektio.boardservice.exception.NoContentException
 import ru.projektio.boardservice.exception.RestrictedUserException
 import ru.projektio.boardservice.exception.WrongColumnOrderException
 import kotlin.math.max
@@ -16,6 +19,7 @@ import kotlin.math.min
 
 @Service
 class ColumnService(
+    private val boardDao: BoardDao,
     private val columnDao: ColumnDao,
     private val columnMapper: ColumnMapper,
     private val boardService: BoardService,
@@ -44,6 +48,15 @@ class ColumnService(
         )
         newColumn.columnPosition = board.columnsIds.size
         columnDao.save(newColumn)
+
+        val boardEnt = boardDao.findById(board.id).orElseThrow { NoColumnException("Нет иди нах") }
+        boardEnt.boardColumns.add(BoardColumnEntity(
+            columnId = newColumn.id,
+            boardId = board.id
+        ))
+
+        boardDao.save(boardEnt)
+
         return columnMapper.columnData(newColumn)
     }
 
@@ -89,7 +102,24 @@ class ColumnService(
     }
 
     fun deleteColumn(userId: Long, boardId: Long, columnPosition: Int) {
-        try {boardService.getBoardById(userId, boardId)} catch (e: RestrictedUserException) {throw RestrictedUserException("Can't delete columns on this board")}
-        columnDao.deleteColumnEntityByBoardIdAndColumnPosition(boardId, columnPosition)
+        try {
+            boardService.getBoardById(userId, boardId)
+        } catch (e: RestrictedUserException) {
+            throw RestrictedUserException("Can't delete columns on this board")
+        }
+
+        val board = boardDao.findById(boardId).orElseThrow { NoColumnException("Доска не найдена") }
+
+        val columnToDelete = columnDao.findByBoardIdAndColumnPosition(boardId, columnPosition)
+            ?: throw NoContentException("Колонка не найдена")
+
+        board.boardColumns.removeIf { it.columnId == columnToDelete.id }
+        columnDao.delete(columnToDelete)
+        columnDao.findAllByBoardIdOrderByColumnPositionAsc(boardId)
+            .forEachIndexed { index, column ->
+                column.columnPosition = index
+                columnDao.save(column)
+            }
+        boardDao.save(board)
     }
 }

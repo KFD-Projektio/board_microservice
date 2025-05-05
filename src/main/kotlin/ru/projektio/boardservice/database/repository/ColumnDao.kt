@@ -7,4 +7,6 @@ interface ColumnDao : CrudRepository<ColumnEntity, Long> {
     fun getColumnEntityByBoardId(boardId: Long): MutableList<ColumnEntity>
     fun deleteColumnEntityByBoardIdAndColumnPosition(boardId: Long, columnPosition: Int)
     fun getColumnEntityById(id: Long): MutableList<ColumnEntity>
+    fun findByBoardIdAndColumnPosition(boardId: Long, position: Int): ColumnEntity?
+    fun findAllByBoardIdOrderByColumnPositionAsc(boardId: Long): List<ColumnEntity>
 }
