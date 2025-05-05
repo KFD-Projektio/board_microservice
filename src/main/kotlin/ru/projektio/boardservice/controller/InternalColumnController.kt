@@ -5,7 +5,7 @@ import ru.projektio.boardservice.service.BoardService
 import ru.projektio.boardservice.service.ColumnService
 
 @RestController
-@RequestMapping("/internal/boards/{boardId}")
+@RequestMapping("/internal")
 class InternalColumnController(
     private val boardService: BoardService,
     private val columnService: ColumnService
@@ -14,4 +14,9 @@ class InternalColumnController(
     fun columnInfo(@PathVariable("columnId") columnId: Long) = ResponseEntity
         .status(HttpStatus.OK)
         .body(columnService.getColumnByIdInternal(columnId))
+
+    @GetMapping("/boards/{boardId}")
+    fun getBoardInfo(@PathVariable("boardId") boardId: Long) = ResponseEntity
+    .status(HttpStatus.OK)
+        .body(boardService.getBoardByIdInternal(boardId))
 }

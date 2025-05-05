@@ -49,6 +49,13 @@ class BoardService (
         return boardDao.existsById(boardId)
     }
 
+
+    fun getBoardByIdInternal(boardId: Long): BoardDataResponse {
+        if (boardExists(boardId)) {
+            return boardDao.findBoardEntityById(boardId).map { boardMapper.boardData(it) }[0]
+        } else throw NoContentException("There is no such board")
+    }
+
     fun getBoardById(userId: Long, boardId: Long): BoardDataResponse {
         if (boardExists(boardId)) {
             val board = boardDao.findBoardEntityById(boardId).map {boardMapper.boardData(it)}[0]
