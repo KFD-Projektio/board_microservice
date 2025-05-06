@@ -9,6 +9,7 @@ import ru.projektio.boardservice.database.repository.BoardDao
 import ru.projektio.boardservice.database.repository.ColumnDao
 import ru.projektio.boardservice.dto.request.CreateColumnRequest
 import ru.projektio.boardservice.dto.request.NewColumnTitleRequest
+import ru.projektio.boardservice.dto.response.BoardDataResponse
 import ru.projektio.boardservice.dto.response.ColumnDataResponse
 import ru.projektio.boardservice.exception.NoColumnException
 import ru.projektio.boardservice.exception.NoContentException
@@ -121,5 +122,10 @@ class ColumnService(
                 columnDao.save(column)
             }
         boardDao.save(board)
+    }
+
+    fun getColumnInfoByIdInternal(columnId: Long): ColumnDataResponse {
+        return columnDao.findColumnEntityById(columnId).map { columnMapper.columnData(it) }[0]
+
     }
 }
